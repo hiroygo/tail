@@ -1,7 +1,6 @@
 #include <cstdio>
 #include <string>
 #include <string.h>
-#include <vector>
 #include <deque>
 #include <filesystem>
 
