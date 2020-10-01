@@ -2,7 +2,9 @@
 #include <string>
 #include <string.h>
 #include <deque>
+#include <vector>
 #include <filesystem>
+#include <unistd.h>
 
 // エラー時には std::runtime_error を発生させる
 std::deque<std::string> GetTailLines(FILE *fp, const size_t numberOfTailLines)
@@ -10,6 +12,11 @@ std::deque<std::string> GetTailLines(FILE *fp, const size_t numberOfTailLines)
     if (!fp)
     {
         throw std::runtime_error("fp nullptr error");
+    }
+
+    if (numberOfTailLines == 0)
+    {
+        return std::deque<std::string>();
     }
 
     std::deque<std::string> lineBufs;
@@ -99,13 +106,75 @@ void TailStdIn(const size_t numberOfTailLines)
     PrintLines(lines);
 }
 
+struct tailOpt final
+{
+    size_t tailLines = 5;
+    std::filesystem::path path;
+};
+
+// エラー時には std::runtime_error を発生させる
+tailOpt ParseOpt(const int argc, char *argv[])
+{
+    tailOpt opt;
+    while (true)
+    {
+        // ロングオプションを使用するには getopt_long を使う
+        const auto op = getopt(argc, argv, "n:");
+        if (op == -1)
+        {
+            break;
+        }
+
+        switch (op)
+        {
+        case 'n':
+            try
+            {
+                opt.tailLines = std::stoul(optarg);
+            }
+            catch (const std::exception &e)
+            {
+                const std::string err = "stoul error, " + std::string(e.what());
+                throw std::runtime_error(err);
+            }
+            break;
+        // 'n' 以外は '?' になる
+        case '?':
+            break;
+        }
+    }
+
+    // getopt は argv を書き換える
+    // getopt 実行前: main.cpp -n 6 -a main.cpp -h aaa.cpp
+    // getopt 実行後: main.cpp -n 6 -a -h main.cpp aaa.cpp
+    // オプション以外の引数が存在するときはファイルパスとする
+    // 一番始めに出現したものだけ処理する
+    if (optind < argc)
+    {
+        opt.path = argv[optind];
+    }
+
+    return opt;
+}
+
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
+    tailOpt opt;
+    try
+    {
+        opt = ParseOpt(argc, argv);
+    }
+    catch (const std::runtime_error &e)
+    {
+        fprintf(stderr, "ParseOpt error, %s\n", e.what());
+        return 1;
+    }
+
+    if (opt.path.empty())
     {
         try
         {
-            TailStdIn(5);
+            TailStdIn(opt.tailLines);
             return 0;
         }
         catch (const std::runtime_error &e)
@@ -114,17 +183,15 @@ int main(int argc, char *argv[])
             return 1;
         }
     }
-    else
+
+    try
     {
-        try
-        {
-            TailFile(argv[1], 5);
-            return 0;
-        }
-        catch (const std::runtime_error &e)
-        {
-            fprintf(stderr, "TailFile error, %s\n", e.what());
-            return 1;
-        }
+        TailFile(opt.path, opt.tailLines);
+        return 0;
+    }
+    catch (const std::runtime_error &e)
+    {
+        fprintf(stderr, "TailFile error, %s\n", e.what());
+        return 1;
     }
 }
