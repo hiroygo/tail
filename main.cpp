@@ -42,7 +42,6 @@ std::deque<std::string> GetTailLines(FILE *fp, const size_t numberOfTailLines)
             lineBufs.push_back("");
         }
 
-        // 新しい行に追加する
         lineBufs.back() += ch;
     }
 
