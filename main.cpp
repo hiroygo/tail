@@ -2,10 +2,10 @@
 #include <string>
 #include <string.h>
 #include <deque>
-#include <vector>
 #include <filesystem>
 #include <unistd.h>
 
+// 行の末尾には '\n' を含む
 // エラー時には std::runtime_error を発生させる
 std::deque<std::string> GetTailLines(FILE *fp, const size_t numberOfTailLines)
 {
@@ -20,6 +20,9 @@ std::deque<std::string> GetTailLines(FILE *fp, const size_t numberOfTailLines)
     }
 
     std::deque<std::string> lineBufs;
+    // deque::back() は empty だと実行できないので、あらかじめ追加する
+    lineBufs.push_back("");
+
     while (true)
     {
         const auto ch = fgetc(fp);
@@ -28,7 +31,8 @@ std::deque<std::string> GetTailLines(FILE *fp, const size_t numberOfTailLines)
             break;
         }
 
-        if (ch == '\n')
+        const bool moveToNextLine = !lineBufs.back().empty() && lineBufs.back().back() == '\n';
+        if (moveToNextLine)
         {
             // 行バッファを使い切っていたら、一番古い行を削除する
             if (lineBufs.size() == numberOfTailLines)
@@ -36,14 +40,9 @@ std::deque<std::string> GetTailLines(FILE *fp, const size_t numberOfTailLines)
                 lineBufs.pop_front();
             }
             lineBufs.push_back("");
-            continue;
         }
 
-        // back() は empty だと実行できないので、空のときはあらかじめ追加する
-        if (lineBufs.empty())
-        {
-            lineBufs.push_back("");
-        }
+        // 新しい行に追加する
         lineBufs.back() += ch;
     }
 
@@ -59,7 +58,7 @@ void PrintLines(const std::deque<std::string> &lines)
 {
     for (const auto &line : lines)
     {
-        printf("%s\n", line.c_str());
+        printf("%s", line.c_str());
     }
 }
 
