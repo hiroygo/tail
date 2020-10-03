@@ -1,6 +1,6 @@
 #include <cstdio>
+#include <cstring>
 #include <string>
-#include <string.h>
 #include <deque>
 #include <filesystem>
 #include <unistd.h>
@@ -67,7 +67,7 @@ void TailFile(const std::filesystem::path &path, const size_t numberOfTailLines)
     auto fp = fopen(path.c_str(), "r");
     if (!fp)
     {
-        const std::string err = "fopen error, " + std::string(strerror(errno));
+        const std::string err = "fopen error, " + std::string(std::strerror(errno));
         throw std::runtime_error(err);
     }
 
