@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
     catch (const std::runtime_error &e)
     {
         fprintf(stderr, "ParseOpt error, %s\n", e.what());
-        return 1;
+        return EXIT_FAILURE;
     }
 
     if (opt.path.empty())
@@ -173,23 +173,23 @@ int main(int argc, char *argv[])
         try
         {
             TailStdIn(opt.tailLines);
-            return 0;
+            return EXIT_SUCCESS;
         }
         catch (const std::runtime_error &e)
         {
             fprintf(stderr, "TailStdIn error, %s\n", e.what());
-            return 1;
+            return EXIT_FAILURE;
         }
     }
 
     try
     {
         TailFile(opt.path, opt.tailLines);
-        return 0;
+        return EXIT_SUCCESS;
     }
     catch (const std::runtime_error &e)
     {
         fprintf(stderr, "TailFile error, %s\n", e.what());
-        return 1;
+        return EXIT_FAILURE;
     }
 }
